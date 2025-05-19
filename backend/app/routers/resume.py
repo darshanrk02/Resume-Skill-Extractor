@@ -11,11 +11,13 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Query,
     UploadFile,
     status,
 )
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 
 from app.models.database import get_db
 from app.models.resume import (
@@ -24,6 +26,7 @@ from app.models.resume import (
     Experience as PydanticExperience,
     Project as PydanticProject,
     ResumeData,
+    Tag as PydanticTag,
 )
 from app.models.sql_models import (
     ContactInfo as DBContactInfo,
@@ -32,6 +35,7 @@ from app.models.sql_models import (
     Project as DBProject,
     Resume as DBResume,
     Skill as DBSkill,
+    Tag as DBTag,
 )
 from app.services.resume_extractor import ResumeExtractor
 
@@ -195,14 +199,28 @@ async def save_resume(
                 db.add(contact_info)
             
             # Create Skills records
-            for skill_name in resume_data.skills:
-                skill = DBSkill(
+            for skill in resume_data.skills:
+                db_skill = DBSkill(
                     resume_id=db_resume.id,
-                    name=skill_name,
-                    # You might want to add skill categorization here
-                    category=None
+                    name=skill.name,
+                    category=skill.category
                 )
-                db.add(skill)
+                db.add(db_skill)
+                
+            # Handle tags if they exist
+            if resume_data.tags:
+                for tag_data in resume_data.tags:
+                    # Check if the tag already exists
+                    existing_tag = db.query(DBTag).filter(DBTag.name == tag_data.name).first()
+                    if existing_tag:
+                        # Use the existing tag
+                        db_resume.tags.append(existing_tag)
+                    else:
+                        # Create a new tag
+                        new_tag = DBTag(name=tag_data.name)
+                        db.add(new_tag)
+                        db.flush()  # To get the new tag ID
+                        db_resume.tags.append(new_tag)
             
             # Create Education records
             for edu in resume_data.education:
@@ -300,29 +318,42 @@ async def get_resume(
 
 @router.get("/resumes", response_model=List[ResumeData])
 async def get_all_resumes(
+    tags: Optional[List[str]] = Query(None, description="Filter by tags"),
+    skill: Optional[str] = Query(None, description="Filter by skill name"),
     db: Session = Depends(get_db)
 ) -> List[ResumeData]:
     """
-    Get all resumes (summary information only)
-    """
-    try:
-        # Query all resumes
-        db_resumes = db.query(DBResume).options(
-            joinedload(DBResume.contact_info),
-            joinedload(DBResume.skills),
-            joinedload(DBResume.education),
-            joinedload(DBResume.experience),
-            joinedload(DBResume.projects)
-        ).order_by(DBResume.upload_date.desc()).all()
-        
-        return [ResumeData.from_db_model(db_resume) for db_resume in db_resumes]
+    Get all resumes with optional tag filtering.
     
-    except Exception as e:
-        logger.error(f"Error retrieving resumes: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while retrieving the resumes. Please try again."
-        )
+    Args:
+        tags: Optional list of tags to filter resumes by
+        skill: Optional skill name to filter resumes by
+        db: Database session
+        
+    Returns:
+        List of resume data objects
+    """
+    query = db.query(DBResume).options(
+        joinedload(DBResume.contact_info),
+        joinedload(DBResume.skills),
+        joinedload(DBResume.education),
+        joinedload(DBResume.experience),
+        joinedload(DBResume.projects),
+        joinedload(DBResume.tags)
+    )
+    
+    # Apply tag filtering if provided
+    if tags:
+        query = query.join(DBResume.tags).filter(DBTag.name.in_(tags))
+    
+    # Apply skill filtering if provided
+    if skill:
+        query = query.join(DBResume.skills).filter(DBSkill.name.ilike(f"%{skill}%"))
+    
+    resumes = query.all()
+    
+    # Convert to Pydantic models
+    return [ResumeData.from_db_model(resume) for resume in resumes]
 
 @router.delete("/resumes/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_resume(
@@ -366,3 +397,88 @@ async def delete_resume(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while deleting the resume. Please try again."
         )
+
+# Add a new endpoint to add or remove tags from a resume
+@router.post("/resumes/{resume_id}/tags", response_model=ResumeData)
+async def add_tags_to_resume(
+    resume_id: int,
+    tags: List[str],
+    db: Session = Depends(get_db)
+) -> ResumeData:
+    """
+    Add tags to a resume.
+    
+    Args:
+        resume_id: ID of the resume
+        tags: List of tag names to add
+        db: Database session
+        
+    Returns:
+        Updated resume data
+    """
+    resume = db.query(DBResume).filter(DBResume.id == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    
+    for tag_name in tags:
+        # Check if the tag already exists
+        tag = db.query(DBTag).filter(DBTag.name == tag_name).first()
+        if not tag:
+            # Create new tag if it doesn't exist
+            tag = DBTag(name=tag_name)
+            db.add(tag)
+            db.flush()
+        
+        # Add tag to resume if not already present
+        if tag not in resume.tags:
+            resume.tags.append(tag)
+    
+    db.commit()
+    db.refresh(resume)
+    
+    return ResumeData.from_db_model(resume)
+
+@router.delete("/resumes/{resume_id}/tags/{tag_name}", response_model=ResumeData)
+async def remove_tag_from_resume(
+    resume_id: int,
+    tag_name: str,
+    db: Session = Depends(get_db)
+) -> ResumeData:
+    """
+    Remove a tag from a resume.
+    
+    Args:
+        resume_id: ID of the resume
+        tag_name: Name of the tag to remove
+        db: Database session
+        
+    Returns:
+        Updated resume data
+    """
+    resume = db.query(DBResume).filter(DBResume.id == resume_id).first()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    
+    tag = db.query(DBTag).filter(DBTag.name == tag_name).first()
+    if not tag:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    
+    if tag in resume.tags:
+        resume.tags.remove(tag)
+        db.commit()
+        db.refresh(resume)
+    
+    return ResumeData.from_db_model(resume)
+
+@router.get("/tags", response_model=List[PydanticTag])
+async def get_all_tags(
+    db: Session = Depends(get_db)
+) -> List[PydanticTag]:
+    """
+    Get all available tags.
+    
+    Returns:
+        List of all tags in the system
+    """
+    tags = db.query(DBTag).all()
+    return [PydanticTag.from_db_model(tag) for tag in tags]

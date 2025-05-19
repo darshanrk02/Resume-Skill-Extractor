@@ -7,8 +7,8 @@ const RESUME_API = {
   UPLOAD: '/resume/upload',
   SAVE: '/resume/save',
   GET_ALL: '/resumes',  // Endpoint for getting all resumes
-  GET_ONE: (id: number) => `/resume/${id}`,
-  DELETE: (id: number) => `/resume/${id}`,
+  GET_ONE: (id: string) => `/resumes/${id}`,
+  DELETE: (id: string) => `/resumes/${id}`,
 };
 
 export interface ResumeListResponse {
@@ -56,9 +56,9 @@ export const uploadResume = async (file: File): Promise<ResumeData> => {
  * @param resumeData Resume data to save
  * @returns Response with resume ID and status
  */
-export const saveResume = async (resumeData: ResumeData): Promise<{ resume_id: number, message: string }> => {
+export const saveResume = async (resumeData: ResumeData): Promise<{ resume_id: string, message: string }> => {
   try {
-    const response = await apiClient.post<{ resume_id: number, message: string }>(
+    const response = await apiClient.post<{ resume_id: string, message: string }>(
       RESUME_API.SAVE, 
       resumeData
     );
@@ -74,7 +74,7 @@ export const saveResume = async (resumeData: ResumeData): Promise<{ resume_id: n
     if (shouldUseMockData()) {
       console.warn('Using mock save response due to API error:', formattedError.message);
       return { 
-        resume_id: 123, 
+        resume_id: "60f9b0b3e6b3a2001c8e4567", 
         message: 'Resume saved successfully (mock)' 
       };
     }
@@ -85,47 +85,25 @@ export const saveResume = async (resumeData: ResumeData): Promise<{ resume_id: n
 };
 
 /**
- * Get all resumes with pagination
- * @param skip Number of items to skip
- * @param limit Maximum number of items to return
- * @returns List of resumes and total count
+ * Get all resumes
+ * @returns List of all resumes
  */
-export const getResumes = async (skip = 0, limit = 10): Promise<ResumeListResponse> => {
+export const getAllResumes = async (): Promise<ResumeData[]> => {
   try {
-    console.log(`Fetching resumes from: ${RESUME_API.GET_ALL}?skip=${skip}&limit=${limit}`);
-    const response = await apiClient.get<ResumeListResponse>(
-      RESUME_API.GET_ALL,
-      { params: { skip, limit } }
-    );
-    
-    console.log('API Response:', response);
-    
-    // Ensure we always return valid resume data
-    const data = response.data || { resumes: [], total: 0 };
-    console.log('Processed data:', data);
-    
-    return {
-      resumes: Array.isArray(data) ? data : (Array.isArray(data.resumes) ? data.resumes : []),
-      total: data.total || (Array.isArray(data) ? data.length : 0)
-    };
+    const response = await apiClient.get<ResumeData[]>(RESUME_API.GET_ALL);
+    return response.data;
   } catch (error) {
     // Log the error for debugging
-    console.error('Error in getResumes:', error);
-    logError(error, 'getResumes');
+    console.error('Error in getAllResumes:', error);
+    logError(error, 'getAllResumes');
     
     if (shouldUseMockData()) {
       console.warn('Using sample resume data due to API error');
-      return {
-        resumes: [sampleResumeData],
-        total: 1
-      };
+      return [sampleResumeData as ResumeData];
     }
     
-    // Return empty data structure in case of error
-    return {
-      resumes: [],
-      total: 0
-    };
+    // Return empty array in case of error
+    return [];
   }
 };
 
@@ -134,7 +112,7 @@ export const getResumes = async (skip = 0, limit = 10): Promise<ResumeListRespon
  * @param resumeId Resume ID
  * @returns Resume data
  */
-export const getResumeById = async (resumeId: number): Promise<ResumeData> => {
+export const getResumeById = async (resumeId: string): Promise<ResumeData> => {
   const response = await apiClient.get<ResumeData>(RESUME_API.GET_ONE(resumeId));
   return response.data;
 };
@@ -145,7 +123,7 @@ export const getResumeById = async (resumeId: number): Promise<ResumeData> => {
  * @param resumeData Updated resume data
  * @returns Updated resume data
  */
-export const updateResume = async (resumeId: number, resumeData: Partial<ResumeData>): Promise<ResumeData> => {
+export const updateResume = async (resumeId: string, resumeData: Partial<ResumeData>): Promise<ResumeData> => {
   const response = await apiClient.put<ResumeData>(RESUME_API.GET_ONE(resumeId), resumeData);
   return response.data;
 };
@@ -154,6 +132,6 @@ export const updateResume = async (resumeId: number, resumeData: Partial<ResumeD
  * Delete a resume
  * @param resumeId Resume ID
  */
-export const deleteResume = async (resumeId: number): Promise<void> => {
+export const deleteResume = async (resumeId: string): Promise<void> => {
   await apiClient.delete(RESUME_API.DELETE(resumeId));
 };

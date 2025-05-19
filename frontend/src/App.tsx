@@ -10,6 +10,7 @@ import Layout from './components/layout/Layout';
 // Pages
 import SummaryPage from './pages/SummaryPage';
 import JDMatchingPage from './pages/JDMatchingPage';
+import ResumeSearchPage from './pages/ResumeSearchPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Routes>
               <Route path="/" element={<SummaryPage />} />
               <Route path="/jd-matching" element={<JDMatchingPage />} />
+              <Route path="/resumes" element={<ResumeSearchPage />} />
             </Routes>
           </Layout>
         </Router>

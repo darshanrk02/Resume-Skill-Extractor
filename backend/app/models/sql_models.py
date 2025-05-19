@@ -4,6 +4,14 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Floa
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .database import Base
 
+# Create resume-tag association table for many-to-many relationship
+resume_tags = Table(
+    "resume_tags",
+    Base.metadata,
+    Column("resume_id", Integer, ForeignKey("resumes.id"), primary_key=True),
+    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True)
+)
+
 class Resume(Base):
     __tablename__ = "resumes"
     
@@ -26,6 +34,21 @@ class Resume(Base):
     )
     projects: Mapped[List["Project"]] = relationship(
         "Project", back_populates="resume", cascade="all, delete-orphan"
+    )
+    # Add relationship to tags
+    tags: Mapped[List["Tag"]] = relationship(
+        "Tag", secondary=resume_tags, back_populates="resumes"
+    )
+
+class Tag(Base):
+    __tablename__ = "tags"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    
+    # Relationship
+    resumes: Mapped[List["Resume"]] = relationship(
+        "Resume", secondary=resume_tags, back_populates="tags"
     )
 
 class ContactInfo(Base):

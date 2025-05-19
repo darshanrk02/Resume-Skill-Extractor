@@ -3,7 +3,6 @@ import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import PDFUpload from '../components/upload/PDFUpload';
 import ResumeSummary from '../components/resume/ResumeSummary';
-import LoadingOverlay from '../components/common/LoadingOverlay';
 import { ResumeData } from '../types';
 import { uploadResume, saveResume } from '../services/resumeService';
 import { useNotification } from '../context/NotificationContext';
@@ -165,7 +164,9 @@ const SummaryPage: React.FC = () => {
             p: 2
           }}
         >
+          <Typography variant="h6" sx={{ mb: 2 }}>Upload Resume</Typography>
           <PDFUpload onFileUpload={handleFileUpload} />
+          
           {isLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
               <CircularProgress />
