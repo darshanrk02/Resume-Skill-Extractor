@@ -3,6 +3,11 @@ export interface Skill {
   name: string;
 }
 
+export interface Tag {
+  id?: string;
+  name: string;
+}
+
 export interface Project {
   title: string;
   description: string;
@@ -46,6 +51,12 @@ export interface ResumeData {
   experience: WorkExperience[];
   education: Education[];
   uploadDate?: string;
+  file_name?: string;
+  file_type?: string;
+  file_size?: number;
+  created_at?: string;
+  updated_at?: string;
+  tags?: Tag[];
 }
 
 // Job Description types

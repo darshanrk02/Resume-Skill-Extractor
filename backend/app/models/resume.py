@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any, Union
 from pydantic import BaseModel, Field, validator
 from enum import Enum
 from .sql_models import Resume as DBResume, ContactInfo as DBContactInfo, Skill as DBSkill, \
-    Education as DBEducation, Experience as DBExperience, Project as DBProject
+    Education as DBEducation, Experience as DBExperience, Project as DBProject, Tag as DBTag
 
 class ContactInfo(BaseModel):
     """Contact information model for a resume."""
@@ -32,6 +32,19 @@ class Skill(BaseModel):
     """Skill model."""
     name: str = Field(..., description="Skill name")
     category: Optional[str] = Field(None, description="Skill category")
+
+class Tag(BaseModel):
+    """Tag model for resume categorization."""
+    id: Optional[int] = Field(None, description="Tag ID")
+    name: str = Field(..., description="Tag name")
+    
+    @classmethod
+    def from_db_model(cls, db_tag: DBTag) -> 'Tag':
+        """Create a Tag instance from a database model."""
+        return cls(
+            id=db_tag.id,
+            name=db_tag.name
+        )
 
 class Education(BaseModel):
     """Education information model."""
@@ -118,6 +131,7 @@ class ResumeData(BaseModel):
     file_size: Optional[int] = Field(None, description="File size in bytes")
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+    tags: List[Tag] = Field(default_factory=list, description="Tags for categorizing resumes")
 
     @classmethod
     def from_db_model(cls, db_resume: DBResume) -> 'ResumeData':
@@ -128,6 +142,7 @@ class ResumeData(BaseModel):
             education=[Education.from_db_model(edu) for edu in db_resume.education],
             experience=[Experience.from_db_model(exp) for exp in db_resume.experience],
             projects=[Project.from_db_model(proj) for proj in db_resume.projects],
+            tags=[Tag.from_db_model(tag) for tag in db_resume.tags],
             file_name=db_resume.filename,
             created_at=db_resume.upload_date,
             updated_at=db_resume.upload_date

@@ -1,5 +1,6 @@
 import os
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
+from pymongo.errors import OperationFailure
 import logging
 from pathlib import Path
 
@@ -26,6 +27,15 @@ try:
     resumes_collection = db.resumes  # This will store resume data
     jd_collection = db.job_descriptions  # For job descriptions
     matches_collection = db.matches  # For storing job-resume matches
+    tag_collection = db.tags  # For storing tags
+    
+    # Create indexes
+    try:
+        # Create unique index on tag name
+        tag_collection.create_index([("name", ASCENDING)], unique=True)
+        logger.info("Created unique index on tags.name")
+    except OperationFailure as e:
+        logger.warning(f"Index creation failed (may already exist): {str(e)}")
     
     # Test connection
     client.admin.command('ping')
@@ -45,4 +55,8 @@ def get_jd_collection():
 
 def get_matches_collection():
     """Return the matches collection."""
-    return matches_collection 
+    return matches_collection
+
+def get_tag_collection():
+    """Return the tags collection."""
+    return tag_collection 
