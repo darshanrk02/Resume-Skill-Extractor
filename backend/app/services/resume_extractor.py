@@ -291,7 +291,7 @@ class ResumeExtractor:
             if not entry_text.strip():
                 continue
             project_entry = {
-                "name": "", "description": "", "technologies": "", "url": ""
+                "name": "", "description": "", "technologies": [], "url": ""
             }
             entry_lines = entry_text.split('\n')
             if entry_lines:
@@ -303,7 +303,7 @@ class ResumeExtractor:
                 if re.search(r'\b' + re.escape(tech) + r'\b', entry_text, re.IGNORECASE):
                     found_techs.append(tech)
             if found_techs:
-                project_entry["technologies"] = ", ".join(found_techs)
+                project_entry["technologies"] = found_techs
             url_pattern = r'(?:github\.com|gitlab\.com|bitbucket\.org|herokuapp\.com|netlify\.app)/[\w.-]+/[\w.-]+'
             url_matches = re.findall(url_pattern, entry_text)
             if url_matches:

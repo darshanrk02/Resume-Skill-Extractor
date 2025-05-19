@@ -52,6 +52,39 @@ export const uploadResume = async (file: File): Promise<ResumeData> => {
 };
 
 /**
+ * Save resume data to the database
+ * @param resumeData Resume data to save
+ * @returns Response with resume ID and status
+ */
+export const saveResume = async (resumeData: ResumeData): Promise<{ resume_id: number, message: string }> => {
+  try {
+    const response = await apiClient.post<{ resume_id: number, message: string }>(
+      RESUME_API.SAVE, 
+      resumeData
+    );
+    return response.data;
+  } catch (error) {
+    // Log the error for debugging
+    logError(error, 'saveResume');
+    
+    // Format the error
+    const formattedError = handleApiError(error);
+    
+    // If we're in development and mock data is enabled, return sample response
+    if (shouldUseMockData()) {
+      console.warn('Using mock save response due to API error:', formattedError.message);
+      return { 
+        resume_id: 123, 
+        message: 'Resume saved successfully (mock)' 
+      };
+    }
+    
+    // Otherwise, throw the formatted error
+    throw formattedError;
+  }
+};
+
+/**
  * Get all resumes with pagination
  * @param skip Number of items to skip
  * @param limit Maximum number of items to return

@@ -5,7 +5,7 @@ import PDFUpload from '../components/upload/PDFUpload';
 import ResumeSummary from '../components/resume/ResumeSummary';
 import LoadingOverlay from '../components/common/LoadingOverlay';
 import { ResumeData } from '../types';
-import { uploadResume } from '../services/resumeService';
+import { uploadResume, saveResume } from '../services/resumeService';
 import { useNotification } from '../context/NotificationContext';
 import { ErrorResponse } from '../utils/errorHandler';
 
@@ -64,6 +64,7 @@ const SummaryPage: React.FC = () => {
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   
   // Use our notification context
   const { showNotification } = useNotification();
@@ -71,6 +72,7 @@ const SummaryPage: React.FC = () => {
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
     setError(null);
+    setCurrentFile(file);
     
     try {
       // Send the file to the backend for processing using our service
@@ -93,6 +95,41 @@ const SummaryPage: React.FC = () => {
         'error',
         errorResponse.message || 'Error processing resume',
         'Upload Failed'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!resumeData) return;
+    
+    try {
+      setIsLoading(true);
+      // Add the file information to the resume data
+      const resumeToSave = {
+        ...resumeData,
+        file_name: currentFile?.name || 'resume.pdf',
+        file_type: currentFile?.type || 'application/pdf',
+        file_size: currentFile?.size || 0,
+        created_at: new Date().toISOString()
+      };
+      
+      const response = await saveResume(resumeToSave);
+      
+      showNotification(
+        'success',
+        `Resume saved successfully with ID: ${response.resume_id}`,
+        'Save Complete'
+      );
+    } catch (err: any) {
+      console.error('Error saving resume:', err);
+      const errorResponse = err as ErrorResponse;
+      
+      showNotification(
+        'error',
+        errorResponse.message || 'Error saving resume',
+        'Save Failed'
       );
     } finally {
       setIsLoading(false);
@@ -155,7 +192,8 @@ const SummaryPage: React.FC = () => {
         >
           <ResumeSummary 
             resumeData={resumeData} 
-            onExport={handleExport} 
+            onExport={handleExport}
+            onSave={handleSave}
           />
         </Box>
       </Box>

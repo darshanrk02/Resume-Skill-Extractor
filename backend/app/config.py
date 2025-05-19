@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from typing import List
+from pydantic import ConfigDict
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,6 +23,10 @@ class Settings(BaseSettings):
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./resume_extractor.db")
     
+    # MongoDB settings
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "resume_extractor")
+    
     # File upload settings
     UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10 MB
@@ -29,10 +34,13 @@ class Settings(BaseSettings):
     # Model settings
     SENTENCE_TRANSFORMER_MODEL: str = "paraphrase-MiniLM-L6-v2"
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
-        env_file_encoding = 'utf-8'
+    # Pydantic v2 style configuration
+    model_config = ConfigDict(
+        case_sensitive=True,
+        env_file=".env",
+        env_file_encoding='utf-8',
+        extra="allow"  # Allow extra fields from environment variables
+    )
 
 # Create settings instance
 settings = Settings()

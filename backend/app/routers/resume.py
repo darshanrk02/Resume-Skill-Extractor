@@ -213,8 +213,7 @@ async def save_resume(
                     field_of_study=edu.field_of_study,
                     start_date=edu.start_date,
                     end_date=edu.end_date,
-                    gpa=edu.gpa,
-                    description=edu.description
+                    gpa=edu.gpa
                 )
                 db.add(education)
             
