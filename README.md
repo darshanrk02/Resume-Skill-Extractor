@@ -184,12 +184,6 @@ The application follows a consistent design system with the following color pale
 - Success: #28a745
 - Light Background: #f4f6f9
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Learn More
-
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
