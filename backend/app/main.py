@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 # Import routers
-from app.routers import resume, database, jd_matching
+from app.routers import resume_mongo, jd_matching
 from app.config import settings
 
 # Configure logging
@@ -32,16 +32,14 @@ app.add_middleware(
     max_age=86400,  # 24 hours
 )
 
-# Include routers
-app.include_router(resume.router, prefix="/api/v1", tags=["resume"])
-app.include_router(database.router, prefix="/api/v1", tags=["database"])
+# Include routers - using MongoDB router now
+app.include_router(resume_mongo.router, prefix="/api/v1", tags=["resume"])
 app.include_router(jd_matching.router, prefix="/api/v1", tags=["jd_matching"])
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    logger.info("Starting up...")
-    # Database initialization is handled by models/__init__.py
+    logger.info("Starting up with MongoDB connection...")
 
 @app.get("/", tags=["Root"])
 async def root():
@@ -56,4 +54,4 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    return {"status": "healthy", "database": "mongodb"}

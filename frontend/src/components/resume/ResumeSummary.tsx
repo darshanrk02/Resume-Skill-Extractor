@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Paper, Chip, Button } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import SaveIcon from '@mui/icons-material/Save';
 import { useTheme } from '@mui/material/styles';
 
 import { ResumeData, Skill, Project, Education, WorkExperience } from '../../types';
@@ -8,9 +9,10 @@ import { ResumeData, Skill, Project, Education, WorkExperience } from '../../typ
 interface ResumeSummaryProps {
   resumeData: ResumeData | null;
   onExport: () => void;
+  onSave: () => void;
 }
 
-const ResumeSummary: React.FC<ResumeSummaryProps> = ({ resumeData, onExport }) => {
+const ResumeSummary: React.FC<ResumeSummaryProps> = ({ resumeData, onExport, onSave }) => {
   const theme = useTheme();
 
   if (!resumeData) {
@@ -285,8 +287,17 @@ const ResumeSummary: React.FC<ResumeSummaryProps> = ({ resumeData, onExport }) =
         p: 1.5, 
         borderTop: `1px solid ${theme.palette.divider}`,
         display: 'flex',
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
+        gap: 2
       }}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          startIcon={<SaveIcon />}
+          onClick={onSave}
+        >
+          Save
+        </Button>
         <Button 
           variant="contained" 
           color="success" 

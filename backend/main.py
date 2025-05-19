@@ -1,6 +1,5 @@
 import uvicorn
 import os
-from backend.app.main import app
 
 if __name__ == "__main__":
     # Get port from environment variable or use default

@@ -15,8 +15,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'Resume Skill Extractor' }) => 
   React.useEffect(() => {
     if (location.pathname === '/') setValue(0);
     else if (location.pathname === '/jd-matching') setValue(1);
-    else if (location.pathname === '/profile') setValue(2);
-    else if (location.pathname.startsWith('/resumes')) setValue(3);
+    else if (location.pathname.startsWith('/resumes')) setValue(2);
   }, [location.pathname]);
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -56,7 +55,6 @@ const Header: React.FC<HeaderProps> = ({ title = 'Resume Skill Extractor' }) => 
           <Tab label="Summary View" component={Link} to="/" />
           <Tab label="JD Matching" component={Link} to="/jd-matching" />
           <Tab label="Resume Search" component={Link} to="/resumes" />
-          <Tab label="Profile" component={Link} to="/profile" />
         </Tabs>
       </Toolbar>
     </AppBar>
