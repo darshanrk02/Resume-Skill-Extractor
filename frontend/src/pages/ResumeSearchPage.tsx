@@ -127,7 +127,7 @@ const ResumeSearchPage: React.FC = () => {
               />
             </Box>
           </Paper>
-        </Box>
+      </Box>
         
         {/* Results Panel */}
         <Box sx={{ 
@@ -141,16 +141,16 @@ const ResumeSearchPage: React.FC = () => {
             <Typography variant="h6" sx={{ mb: 2 }}>
               Results ({resumes.length} resume{resumes.length !== 1 ? 's' : ''})
             </Typography>
-            
-            {loading ? (
+
+      {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <CircularProgress />
-              </Box>
-            ) : (
+          <CircularProgress />
+        </Box>
+      ) : (
               <Stack spacing={2}>
                 {resumes.map((resume, index) => (
                   <Card key={index} variant="outlined">
-                    <CardContent>
+                  <CardContent>
                       <Typography variant="h6">
                         {resume.contact_info?.name || `Resume ${index + 1}`}
                       </Typography>
@@ -158,7 +158,7 @@ const ResumeSearchPage: React.FC = () => {
                       {resume.contact_info?.email && (
                         <Typography variant="body2" color="text.secondary">
                           {resume.contact_info.email}
-                        </Typography>
+                    </Typography>
                       )}
                       
                       {resume.summary && (
@@ -166,29 +166,29 @@ const ResumeSearchPage: React.FC = () => {
                           {resume.summary.length > 120 
                             ? `${resume.summary.substring(0, 120)}...` 
                             : resume.summary}
-                        </Typography>
+                    </Typography>
                       )}
                       
                       {resume.skills && resume.skills.length > 0 && (
-                        <Box sx={{ mt: 1 }}>
+                    <Box sx={{ mt: 1 }}>
                           <Typography variant="subtitle2">Skills:</Typography>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                             {resume.skills.slice(0, 8).map((skill, i) => (
-                              <Chip 
+                        <Chip 
                                 key={i} 
                                 label={skill.name} 
-                                size="small" 
+                          size="small" 
                                 variant="outlined" 
-                              />
-                            ))}
+                        />
+                      ))}
                             {resume.skills.length > 8 && (
-                              <Chip 
+                        <Chip 
                                 label={`+${resume.skills.length - 8} more`} 
-                                size="small" 
-                                variant="outlined" 
-                              />
-                            )}
-                          </Box>
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                    </Box>
                         </Box>
                       )}
                       
@@ -334,4 +334,4 @@ const ResumeSearchPage: React.FC = () => {
   );
 };
 
-export default ResumeSearchPage; 
+export default ResumeSearchPage;

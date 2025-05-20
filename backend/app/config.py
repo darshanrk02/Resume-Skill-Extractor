@@ -23,16 +23,13 @@ class Settings(BaseSettings):
     # Database settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./resume_extractor.db")
     
-    # MongoDB settings
-    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    # MongoDB settings - require MongoDB Atlas connection string
+    MONGODB_URI: str = os.getenv("MONGODB_URI")
     MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "resume_extractor")
     
     # File upload settings
     UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10 MB
-    
-    # Model settings
-    SENTENCE_TRANSFORMER_MODEL: str = "paraphrase-MiniLM-L6-v2"
 
     # Pydantic v2 style configuration
     model_config = ConfigDict(

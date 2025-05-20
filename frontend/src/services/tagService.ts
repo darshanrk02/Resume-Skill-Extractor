@@ -73,4 +73,4 @@ export const getResumesByTags = async (tags: string[]): Promise<any> => {
     }
     throw error;
   }
-}; 
+};

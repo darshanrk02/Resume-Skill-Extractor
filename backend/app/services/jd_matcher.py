@@ -1,15 +1,10 @@
 from typing import List, Dict, Any
 import numpy as np
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from ..models.job_description import JobDescription, ResumeMatch, SkillMatch, RequiredSkill
 from ..models.resume import ResumeData
 
 class JDMatcher:
     def __init__(self):
-        # Load the sentence transformer model for semantic similarity
-        self.model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-        
         # Define skill relationships for better matching
         self.related_skills = {
             "python": ["django", "flask", "fastapi", "pyramid"],
@@ -25,7 +20,7 @@ class JDMatcher:
     def match_resume(self, resume_data: ResumeData, job_description: JobDescription) -> ResumeMatch:
         """Match a resume against a job description"""
         # Extract skills from resume
-        resume_skills = [skill["name"] for skill in resume_data.skills]
+        resume_skills = [skill.name for skill in resume_data.skills]
         
         # Match skills
         skill_matches = []
@@ -114,11 +109,11 @@ class JDMatcher:
         return skill.lower().strip().replace('-', '').replace(' ', '')
 
     def _find_related_skill(self, required_skill: str, resume_skills: List[str]) -> tuple:
-        """Find a related skill match using semantic similarity"""
+        """Find a related skill match using predefined relations"""
         if not resume_skills:
             return None
 
-        # First check predefined related skills
+        # Check predefined related skills
         req_normalized = self._normalize_skill(required_skill)
         for category, related in self.related_skills.items():
             if req_normalized in map(self._normalize_skill, related):
@@ -126,17 +121,16 @@ class JDMatcher:
                     if self._normalize_skill(skill) in map(self._normalize_skill, related):
                         return (skill, 0.8)  # High similarity for predefined relations
 
-        # Use semantic similarity as fallback
-        required_embedding = self.model.encode([required_skill])
-        skills_embedding = self.model.encode(resume_skills)
-        similarities = cosine_similarity(required_embedding, skills_embedding)[0]
-        
-        best_match_idx = np.argmax(similarities)
-        best_similarity = similarities[best_match_idx]
-        
-        if best_similarity > 0.7:  # Threshold for related skills
-            return (resume_skills[best_match_idx], best_similarity)
+        # Simple string matching fallback
+        for skill in resume_skills:
+            # Check if one contains the other
+            skill_norm = self._normalize_skill(skill)
+            req_norm = self._normalize_skill(required_skill)
             
+            if skill_norm in req_norm or req_norm in skill_norm:
+                similarity = 0.7  # Decent similarity for substring matches
+                return (skill, similarity)
+                
         return None
 
     def _get_skill_years(self, skill: str, resume_data: ResumeData) -> float:
@@ -144,7 +138,7 @@ class JDMatcher:
         # Look in experience sections for skill mentions
         total_years = 0
         for exp in resume_data.experience:
-            if self._normalize_skill(skill) in self._normalize_skill(exp.description):
+            if exp.description and self._normalize_skill(skill) in self._normalize_skill(exp.description):
                 # Calculate years between start and end dates
                 # This is a simplified calculation
                 if exp.start_date and exp.end_date:
@@ -199,30 +193,31 @@ class JDMatcher:
         related_matches = [m for m in skill_matches if m.match_type == "related"]
         
         if direct_matches:
-            explanation.append(f"Directly matches {len(direct_matches)} required skills")
+            explanation.append(f"Directly matched {len(direct_matches)} skills")
         
         if related_matches:
-            explanation.append(f"Has {len(related_matches)} related/transferable skills")
-
-        # Generate improvement suggestions
+            explanation.append(f"Found {len(related_matches)} related skills that could be leveraged")
+        
         if missing_skills:
-            critical_missing = [s.name for s in missing_skills if s.importance == "required"]
+            critical_missing = [s.name for s in missing_skills if s.weight >= 8]
             if critical_missing:
-                explanation.append(f"Missing {len(critical_missing)} critical skills")
-                suggestions.append(f"Focus on acquiring these critical skills: {', '.join(critical_missing)}")
-
-        # Experience-based suggestions
-        if job_description.min_experience:
-            total_exp = sum(self._get_skill_years(skill["name"], resume_data) or 0 
-                          for skill in resume_data.skills)
-            if total_exp < job_description.min_experience:
-                suggestions.append(f"Gain more experience (job requires {job_description.min_experience} years)")
-
-        # Education-based suggestions
-        if job_description.education_level and not any(
-            edu.degree and job_description.education_level.lower() in edu.degree.lower() 
-            for edu in resume_data.education
-        ):
-            suggestions.append(f"Consider pursuing {job_description.education_level} degree")
-
+                explanation.append(f"Missing critical skills: {', '.join(critical_missing)}")
+                suggestions.append(f"Consider acquiring these critical skills: {', '.join(critical_missing)}")
+        
+        # Add improvement suggestions
+        if missing_skills:
+            # Group by category to make suggestions more coherent
+            missing_by_category = {}
+            for skill in missing_skills:
+                for category, related_skills in self.related_skills.items():
+                    if self._normalize_skill(skill.name) in map(self._normalize_skill, related_skills):
+                        if category not in missing_by_category:
+                            missing_by_category[category] = []
+                        missing_by_category[category].append(skill.name)
+                        break
+            
+            for category, skills in missing_by_category.items():
+                if len(skills) > 1:
+                    suggestions.append(f"Consider improving {category} skills, particularly: {', '.join(skills)}")
+        
         return recommendation, confidence_score, explanation, suggestions

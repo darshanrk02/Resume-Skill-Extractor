@@ -1,9 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { API_CONFIG } from '../config';
 
 // Create an Axios instance with default config
 const apiClient: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:8000', // Update with your backend URL
-  timeout: 30000, // 30 seconds
+  baseURL: API_CONFIG.BASE_URL, // Use value from config file
+  timeout: API_CONFIG.TIMEOUT, // Use value from config file
   headers: {
     'Content-Type': 'application/json',
   },

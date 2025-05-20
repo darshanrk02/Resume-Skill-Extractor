@@ -3,6 +3,7 @@ import { ResumeData } from '../types';
 import { handleApiError, logError, shouldUseMockData } from '../utils/errorHandler';
 import { sampleResumeData } from '../data/sampleData';
 
+// Constants for API endpoints (without the /api/v1 prefix as it's already in the baseURL)
 const RESUME_API = {
   UPLOAD: '/resume/upload',
   SAVE: '/resume/save',

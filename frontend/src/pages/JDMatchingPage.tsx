@@ -67,13 +67,13 @@ const JDMatchingPage = () => {
         formData.append('company', jobDescription.company);
       }
 
-      console.log('Sending request to /api/v1/analyze with:', {
+      console.log('Sending request to /analyze with:', {
         jobTitle: jobDescription.title,
         company: jobDescription.company,
         resumeName: resumeFile.name
       });
 
-      const response = await apiClient.post<BackendMatch>('/api/v1/analyze', formData, {
+      const response = await apiClient.post<BackendMatch>('/analyze', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -125,7 +125,6 @@ const JDMatchingPage = () => {
       });
       
       setError(errorMessage);
-      showNotification('error', errorMessage, 'Analysis Failed');
       showNotification('error', errorMessage, 'Analysis Failed');
     } finally {
       setIsLoading(false);
