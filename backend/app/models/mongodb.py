@@ -3,15 +3,15 @@ from pymongo import MongoClient, ASCENDING
 from pymongo.errors import OperationFailure
 import logging
 from pathlib import Path
+from app.config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Hardcoded connection string for MongoDB Atlas (for testing)
-# In production, this should be loaded from environment variables
-MONGO_URI = "mongodb+srv://darsh:d45lRVKlxWyanKX3@test.rzdc49q.mongodb.net/Resume?retryWrites=true&w=majority"
-DB_NAME = "Resume"
+# Get MongoDB connection information from environment variables
+MONGO_URI = settings.MONGODB_URI
+DB_NAME = settings.MONGODB_DB_NAME
 
 logger.info(f"Using MongoDB URI: {MONGO_URI}")
 logger.info(f"Using DB name: {DB_NAME}")
